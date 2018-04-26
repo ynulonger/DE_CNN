@@ -1,0 +1,14 @@
+python3 cnn.py s19 arousal 2
+python3 cnn.py s20 arousal 2
+python3 cnn.py s21 arousal 2
+python3 cnn.py s22 arousal 2
+python3 cnn.py s23 arousal 2
+python3 cnn.py s24 arousal 2
+python3 cnn.py s25 arousal 2
+python3 cnn.py s26 arousal 2
+python3 cnn.py s27 arousal 2
+python3 cnn.py s28 arousal 2
+python3 cnn.py s29 arousal 2
+python3 cnn.py s30 arousal 2
+python3 cnn.py s31 arousal 2
+python3 cnn.py s32 arousal 2
