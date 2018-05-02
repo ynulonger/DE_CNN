@@ -22,7 +22,7 @@ import numpy as np
 import time
 import math
 
-input_channel_num = 3
+input_channel_num = 4
 conv_fuse = "plus"
 
 conv_1_shape = '4*4*1*16'
@@ -56,8 +56,9 @@ arousal_or_valence    =sys.argv[2]
 band = int(sys.argv[3])
 band_1 = int(sys.argv[4])
 band_2 = int(sys.argv[5])
+band_3 = int(sys.argv[6])
 
-dataset_dir = "/home/yyl/DE_CNN/DE_dataset/DE_"
+dataset_dir = "/home/yyl/DE_CNN/DE_dataset/without_base/DE_"
 ###load training set
 
 data_file = sio.loadmat(dataset_dir+input_file+".mat")
@@ -70,7 +71,7 @@ lables_backup = labels
 print("cnn_dataset shape before reshape:", np.shape(cnn_datasets))
 cnn_datasets = cnn_datasets.transpose(0,2,3,1)
 
-cnn_datasets = cnn_datasets[:,:,:,[band-1,band_1-1,band_2-1]]
+cnn_datasets = cnn_datasets[:,:,:,[band-1,band_1-1,band_2-1,band_3-1]]
 
 cnn_datasets = cnn_datasets.reshape(len(cnn_datasets), window_size, 9,9,input_channel_num)
 print("cnn_dataset shape after reshape:", np.shape(cnn_datasets))
@@ -199,9 +200,6 @@ print("\nconv_2 shape:", conv_2.shape)
 conv_3 = apply_conv2d(conv_2, kernel_height_3rd, kernel_width_3rd, conv_channel_num * 2, conv_channel_num * 4,
                       kernel_stride,'conv3')
 print("\nconv_3 shape:", conv_3.shape)
-
-# conv_4 = apply_conv2d(conv_3, 1, 1, conv_channel_num * 4,13,kernel_stride,'conv3')
-# print("\nconv_4 shape:", conv_4.shape)
 
 # fully connected layer
 
@@ -412,8 +410,8 @@ for curr_fold in range(fold):
         #     file_dir = "beta"
         # else:
         #     file_dir = "gmma"
-        file_dir = str(band)+str(band_1)+str(band_2)
-        writer = pd.ExcelWriter("/home/yyl/DE_CNN/result/"+file_dir+"/"+arousal_or_valence+"/"+input_file+"_"+str(curr_fold)+".xlsx")
+        file_dir = str(band)+str(band_1)+str(band_2)+str(band_3)
+        writer = pd.ExcelWriter("/home/yyl/DE_CNN/result/without_base/"+file_dir+"/"+arousal_or_valence+"/"+input_file+"_"+str(curr_fold)+".xlsx")
         ins.to_excel(writer, 'condition', index=False)
         result.to_excel(writer, 'result', index=False)
     #    summary.to_excel(writer, 'summary', index=False)
