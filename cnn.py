@@ -22,7 +22,10 @@ import numpy as np
 import time
 import math
 
-input_channel_num = 4
+def minus(item):
+    return item-1
+    
+# input_channel_num = 4
 conv_fuse = "plus"
 
 conv_1_shape = '4*4*1*16'
@@ -51,12 +54,20 @@ norm_type = '2D'
 regularization_method = 'dropout'
 enable_penalty = True
 
-input_file    =sys.argv[1]
-arousal_or_valence    =sys.argv[2]
-band = int(sys.argv[3])
-band_1 = int(sys.argv[4])
-band_2 = int(sys.argv[5])
-band_3 = int(sys.argv[6])
+# input_file    =sys.argv[1]
+# arousal_or_valence    =sys.argv[2]
+# band = int(sys.argv[3])
+# band_1 = int(sys.argv[4])
+# band_2 = int(sys.argv[5])
+# band_3 = int(sys.argv[6])
+
+args = sys.argv[:]
+input_file = args[1]
+arousal_or_valence = args[2]
+inputs = list(map(int,args[3:]))
+bands = list(map(minus,inputs))
+print(bands)
+input_channel_num = len(bands)
 
 dataset_dir = "/home/yyl/DE_CNN/DE_dataset/without_base/DE_"
 ###load training set
@@ -71,7 +82,7 @@ lables_backup = labels
 print("cnn_dataset shape before reshape:", np.shape(cnn_datasets))
 cnn_datasets = cnn_datasets.transpose(0,2,3,1)
 
-cnn_datasets = cnn_datasets[:,:,:,[band-1,band_1-1,band_2-1,band_3-1]]
+cnn_datasets = cnn_datasets[:,:,:,bands]
 
 cnn_datasets = cnn_datasets.reshape(len(cnn_datasets), window_size, 9,9,input_channel_num)
 print("cnn_dataset shape after reshape:", np.shape(cnn_datasets))
@@ -127,6 +138,7 @@ pooling_width = 2
 pooling_stride = 2
 # algorithn parameter
 learning_rate = 1e-4
+
 
 def weight_variable(shape,name):
     initial = tf.truncated_normal(shape, stddev=0.1)
@@ -410,7 +422,10 @@ for curr_fold in range(fold):
         #     file_dir = "beta"
         # else:
         #     file_dir = "gmma"
-        file_dir = str(band)+str(band_1)+str(band_2)+str(band_3)
+        file_dir = ""
+        for i in inputs:
+            file_dir = file_dir+str(i)
+        # file_dir = str(band)+str(band_1)+str(band_2)+str(band_3)
         writer = pd.ExcelWriter("/home/yyl/DE_CNN/result/without_base/"+file_dir+"/"+arousal_or_valence+"/"+input_file+"_"+str(curr_fold)+".xlsx")
         ins.to_excel(writer, 'condition', index=False)
         result.to_excel(writer, 'result', index=False)

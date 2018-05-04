@@ -106,16 +106,16 @@ def wgn(x, snr):
     return np.random.randn(len(x)) * np.sqrt(npower)
 
 def feature_normalize(data):
-	# mean = data[data.nonzero()].mean()
-	# sigma = data[data. nonzero ()].std()
+	mean = data[data.nonzero()].mean()
+	sigma = data[data. nonzero ()].std()
 	data_normalized = data
-	# data_normalized[data_normalized.nonzero()] = (data_normalized[data_normalized.nonzero()] - mean)/sigma
+	data_normalized[data_normalized.nonzero()] = (data_normalized[data_normalized.nonzero()] - mean)/sigma
 	# A = 1/(np.sqrt(2*math.pi)*sigma)
 	# data_normalized[data_normalized.nonzero()] = A*np.e**(-((data_normalized[data_normalized.nonzero()] - mean)**2/(2*sigma**2)))*data[data.nonzero()]
-	data_normalized[data_normalized.nonzero()] = wgn(data_normalized[data_normalized.nonzero()],6)
-	mean = data_normalized[data_normalized.nonzero()].mean()
-	sigma = data_normalized[data_normalized. nonzero ()].std()
-	data_normalized[data_normalized.nonzero()] = (data_normalized[data_normalized.nonzero()] - mean)/sigma
+	# data_normalized[data_normalized.nonzero()] = wgn(data_normalized[data_normalized.nonzero()],6)
+	# mean = data_normalized[data_normalized.nonzero()].mean()
+	# sigma = data_normalized[data_normalized. nonzero ()].std()
+	# data_normalized[data_normalized.nonzero()] = (data_normalized[data_normalized.nonzero()] - mean)/sigma
 	# return shape: 9*9
 	return data_normalized
 
