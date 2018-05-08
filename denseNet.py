@@ -113,7 +113,7 @@ kernel_height_4th = 1
 kernel_width_4th = 1
 
 kernel_stride = 1
-conv_channel_num = 32
+conv_channel_num = 16
 # pooling parameter
 pooling_height = 2
 pooling_width = 2
@@ -144,7 +144,10 @@ def conv3d(self,x, W, kernel_stride):
 def apply_conv1d(x, filter_width, in_channels, out_channels, kernel_stride,name):
     weight = weight_variable([filter_width, in_channels, out_channels],name)
     bias = bias_variable([out_channels],name)  # each feature map shares the same weight and bias
-    return tf.nn.elu(tf.add(conv1d(x, weight, kernel_stride), bias))
+    return tf.add(conv1d(x, weight, kernel_stride), bias)
+
+def activate(x):
+    return tf.nn.selu(tf.layers.batch_normalization(x))
 
 def apply_conv2d(x, filter_height, filter_width, in_channels, out_channels, kernel_stride,name):
     weight = weight_variable([filter_height, filter_width, in_channels, out_channels],name)
@@ -152,7 +155,7 @@ def apply_conv2d(x, filter_height, filter_width, in_channels, out_channels, kern
     print("weight shape:", np.shape(weight))
     print("x shape:", np.shape(x))
     #tf.layers.batch_normalization()
-    return tf.nn.selu(tf.layers.batch_normalization(conv2d(x, weight, kernel_stride)))
+    return tf.nn.selu(tf.layers.batch_normalization(tf.add(conv2d(x, weight, kernel_stride),bias)))
 
 def apply_conv3d(self,x, filter_depth, filter_height, filter_width, in_channels, out_channels, kernel_stride):
     weight = self.weight_variable([filter_depth, filter_height, filter_width, in_channels, out_channels])

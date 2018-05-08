@@ -69,7 +69,7 @@ bands = list(map(minus,inputs))
 print(bands)
 input_channel_num = len(bands)
 
-dataset_dir = "/home/yyl/DE_CNN/DE_dataset/without_base/DE_"
+dataset_dir = "/home/yyl/DE_CNN/DE_dataset/without_decomposed/DE_"
 ###load training set
 
 data_file = sio.loadmat(dataset_dir+input_file+".mat")
@@ -163,13 +163,7 @@ def apply_conv2d(x, filter_height, filter_width, in_channels, out_channels, kern
     print("weight shape:", np.shape(weight))
     print("x shape:", np.shape(x))
     #tf.layers.batch_normalization()
-    return tf.nn.selu(tf.layers.batch_normalization(conv2d(x, weight, kernel_stride)))
-
-def apply_conv3d(self,x, filter_depth, filter_height, filter_width, in_channels, out_channels, kernel_stride):
-    weight = self.weight_variable([filter_depth, filter_height, filter_width, in_channels, out_channels])
-    bias = self.bias_variable([out_channels]) # each feature map shares the same weight and bias
-    conv_3d = tf.add(self.conv3d(x, weight, kernel_stride), bias)
-    return tf.nn.selu(conv_3d)
+    return tf.nn.selu(tf.layers.batch_normalization(tf.add(conv2d(x, weight, kernel_stride),bias)))
 
 def apply_max_pooling(x, pooling_height, pooling_width, pooling_stride):
     # API: must ksize[0]=ksize[4]=1, strides[0]=strides[4]=1
@@ -426,7 +420,7 @@ for curr_fold in range(fold):
         for i in inputs:
             file_dir = file_dir+str(i)
         # file_dir = str(band)+str(band_1)+str(band_2)+str(band_3)
-        writer = pd.ExcelWriter("/home/yyl/DE_CNN/result/without_base/"+file_dir+"/"+arousal_or_valence+"/"+input_file+"_"+str(curr_fold)+".xlsx")
+        writer = pd.ExcelWriter("/home/yyl/DE_CNN/result/without_decomposed/"+file_dir+"/"+arousal_or_valence+"/"+input_file+"_"+str(curr_fold)+".xlsx")
         ins.to_excel(writer, 'condition', index=False)
         result.to_excel(writer, 'result', index=False)
     #    summary.to_excel(writer, 'summary', index=False)

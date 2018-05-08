@@ -163,13 +163,8 @@ def apply_conv2d(x, filter_height, filter_width, in_channels, out_channels, kern
     print("weight shape:", np.shape(weight))
     print("x shape:", np.shape(x))
     #tf.layers.batch_normalization()
-    return tf.nn.selu(tf.layers.batch_normalization(conv2d(x, weight, kernel_stride)))
-
-def apply_conv3d(self,x, filter_depth, filter_height, filter_width, in_channels, out_channels, kernel_stride):
-    weight = self.weight_variable([filter_depth, filter_height, filter_width, in_channels, out_channels])
-    bias = self.bias_variable([out_channels]) # each feature map shares the same weight and bias
-    conv_3d = tf.add(self.conv3d(x, weight, kernel_stride), bias)
-    return tf.nn.selu(conv_3d)
+    conv = tf.add(conv2d(x, weight, kernel_stride),bias)
+    return tf.nn.selu(tf.layers.batch_normalization(conv))
 
 def apply_max_pooling(x, pooling_height, pooling_width, pooling_stride):
     # API: must ksize[0]=ksize[4]=1, strides[0]=strides[4]=1
@@ -220,7 +215,9 @@ print("\n**********(" + time.asctime(time.localtime(time.time())) + ") Define pa
 print("\n**********(" + time.asctime(time.localtime(time.time())) + ") Define NN structure Begin: **********")
 
 # base_de = weight_variable([input_height,input_width,len(bands)],name="DE")
-base_de = tf.Variable(generate_base_DE(),dtype="float32")
+base_de = tf.constant(generate_base_DE(),dtype="float32")
+base_weight = weight_variable([input_height,input_width,input_channel_num],"de_weight")
+base_de = tf.multiply(base_de,base_weight)
 # print(base_de)
 # print("base_de:",base_de)
 # input placeholder
@@ -460,7 +457,7 @@ for curr_fold in range(fold):
         for i in inputs:
             file_dir = file_dir+str(i)
         # file_dir = str(band)+str(band_1)+str(band_2)+str(band_3)
-        writer = pd.ExcelWriter("/home/yyl/DE_CNN/result/without_base/"+file_dir+"/"+arousal_or_valence+"/"+input_file+"_"+str(curr_fold)+".xlsx")
+        writer = pd.ExcelWriter("/home/yyl/DE_CNN/result/base_generated/"+file_dir+"/"+arousal_or_valence+"/"+input_file+"_"+str(curr_fold)+".xlsx")
         ins.to_excel(writer, 'condition', index=False)
         result.to_excel(writer, 'result', index=False)
     #    summary.to_excel(writer, 'summary', index=False)
