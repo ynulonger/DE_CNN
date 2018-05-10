@@ -69,7 +69,7 @@ bands = list(map(minus,inputs))
 print(bands)
 input_channel_num = len(bands)
 
-dataset_dir = "/home/yyl/DE_CNN/DE_dataset/without_decomposed/DE_"
+dataset_dir = "/home/yyl/DE_CNN/DE_dataset/without_base/DE_"
 ###load training set
 
 data_file = sio.loadmat(dataset_dir+input_file+".mat")
@@ -420,7 +420,7 @@ for curr_fold in range(fold):
         for i in inputs:
             file_dir = file_dir+str(i)
         # file_dir = str(band)+str(band_1)+str(band_2)+str(band_3)
-        writer = pd.ExcelWriter("/home/yyl/DE_CNN/result/without_decomposed/"+file_dir+"/"+arousal_or_valence+"/"+input_file+"_"+str(curr_fold)+".xlsx")
+        writer = pd.ExcelWriter("/home/yyl/DE_CNN/result/without_base/"+file_dir+"/"+arousal_or_valence+"/"+input_file+"_"+str(curr_fold)+".xlsx")
         ins.to_excel(writer, 'condition', index=False)
         result.to_excel(writer, 'result', index=False)
     #    summary.to_excel(writer, 'summary', index=False)

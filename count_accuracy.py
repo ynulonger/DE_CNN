@@ -5,7 +5,7 @@ import numpy as np
 
 arousal_or_valence = "valence"
 output_file = "total.xlsx"
-dir_path = "/home/yyl/DE_CNN/result/"
+dir_path = "/home/yyl/DE_CNN/result/without_base/"
 model_name = "CNN"
 # 10 folds cross validation
 fold = 10
@@ -46,35 +46,35 @@ def fill_cells(dir_path,column_index,model_name,target_class):
 	out_sheet.write(sub+3,column_index+1,mean_accuracy)
 	out_sheet.write(sub+4,column_index,"std:")
 	out_sheet.write(sub+4,column_index+1,std)
-fill_cells(dir_path+"theta/",0,"CNN_theta","valence")
-fill_cells(dir_path+"theta/",2,"CNN_theta","arousal")
+fill_cells(dir_path+"1/",0,"θ","valence")
+fill_cells(dir_path+"1/",2,"θ","arousal")
 
-fill_cells(dir_path+"alpha/",5,"CNN_alpha","valence")
-fill_cells(dir_path+"alpha/",7,"CNN_alpha","arousal")
+fill_cells(dir_path+"2/",5,"α","valence")
+fill_cells(dir_path+"2/",7,"α","arousal")
 
-fill_cells(dir_path+"beta/",10,"CNN_beta","valence")
-fill_cells(dir_path+"beta/",12,"CNN_beta","arousal")
+fill_cells(dir_path+"3/",10,"β","valence")
+fill_cells(dir_path+"3/",12,"β","arousal")
 
-fill_cells(dir_path+"gmma/",15,"CNN_gmma","valence")
-fill_cells(dir_path+"gmma/",17,"CNN_gmma","arousal")
+fill_cells(dir_path+"4/",15,"γ","valence")
+fill_cells(dir_path+"4/",17,"γ","arousal")
 
-fill_cells(dir_path+"12/",20,"theta+alpha","valence")
-fill_cells(dir_path+"12/",22,"theta+alpha","arousal")
+fill_cells(dir_path+"12/",20,"θ+α","valence")
+fill_cells(dir_path+"12/",22,"θ+α","arousal")
 
-fill_cells(dir_path+"13/",25,"theta+beta","valence")
-fill_cells(dir_path+"13/",27,"theta+beta","arousal")
+fill_cells(dir_path+"13/",25,"θ+β","valence")
+fill_cells(dir_path+"13/",27,"θ+β","arousal")
 
-fill_cells(dir_path+"14/",30,"theta+gmma","valence")
-fill_cells(dir_path+"14/",32,"theta+gmma","arousal")
+fill_cells(dir_path+"14/",30,"θ+γ","valence")
+fill_cells(dir_path+"14/",32,"θ+γ","arousal")
 
-fill_cells(dir_path+"23/",35,"alpha+beta","valence")
-fill_cells(dir_path+"23/",37,"alpha+beta","arousal")
+fill_cells(dir_path+"23/",35,"α+β","valence")
+fill_cells(dir_path+"23/",37,"α+β","arousal")
 
-fill_cells(dir_path+"24/",40,"alpha+gmma","valence")
-fill_cells(dir_path+"24/",42,"alpha+gmma","arousal")
+fill_cells(dir_path+"24/",40,"α+γ","valence")
+fill_cells(dir_path+"24/",42,"α+γ","arousal")
 
-fill_cells(dir_path+"34/",45,"beta+gmma","valence")
-fill_cells(dir_path+"34/",47,"beta+gmma","arousal")
+fill_cells(dir_path+"34/",45,"β+γ","valence")
+fill_cells(dir_path+"34/",47,"β+γ","arousal")
 
 fill_cells(dir_path+"123/",50,"θ+α+β","valence")
 fill_cells(dir_path+"123/",52,"θ+α+β","arousal")
@@ -91,4 +91,7 @@ fill_cells(dir_path+"234/",67,"α+β+γ","arousal")
 fill_cells(dir_path+"4_band/",70,"θ+α+β+γ","valence")
 fill_cells(dir_path+"4_band/",72,"θ+α+β+γ","arousal")
 
-out_book.save("accuracies_all.xls")
+fill_cells("/home/yyl/DE_CNN/result/without_decomposed/without_base/"+"1/",75,"original","valence")
+fill_cells("/home/yyl/DE_CNN/result/without_decomposed/without_base/"+"1/",77,"original","arousal")
+
+out_book.save("accuracies_without_base.xls")
