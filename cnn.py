@@ -54,13 +54,6 @@ norm_type = '2D'
 regularization_method = 'dropout'
 enable_penalty = True
 
-# input_file    =sys.argv[1]
-# arousal_or_valence    =sys.argv[2]
-# band = int(sys.argv[3])
-# band_1 = int(sys.argv[4])
-# band_2 = int(sys.argv[5])
-# band_3 = int(sys.argv[6])
-
 args = sys.argv[:]
 input_file = args[1]
 arousal_or_valence = args[2]

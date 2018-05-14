@@ -88,10 +88,10 @@ fill_cells(dir_path+"134/",62,"θ+β+γ","arousal")
 fill_cells(dir_path+"234/",65,"α+β+γ","valence")
 fill_cells(dir_path+"234/",67,"α+β+γ","arousal")
 
-fill_cells(dir_path+"4_band/",70,"θ+α+β+γ","valence")
-fill_cells(dir_path+"4_band/",72,"θ+α+β+γ","arousal")
+fill_cells(dir_path+"1234/",70,"θ+α+β+γ","valence")
+fill_cells(dir_path+"1234/",72,"θ+α+β+γ","arousal")
 
-fill_cells("/home/yyl/DE_CNN/result/without_decomposed/without_base/"+"1/",75,"original","valence")
-fill_cells("/home/yyl/DE_CNN/result/without_decomposed/without_base/"+"1/",77,"original","arousal")
+fill_cells("/home/yyl/DE_CNN/result/without_base/without_decomposed/"+"1/",75,"original","valence")
+fill_cells("/home/yyl/DE_CNN/result/without_base/without_decomposed/"+"1/",77,"original","arousal")
 
 out_book.save("accuracies_without_base.xls")
