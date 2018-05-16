@@ -42,6 +42,7 @@ pool_3_shape = 'None'
 conv_4_shape = '1*1*128*4'
 pool_4_shape = 'None'
 
+time_step = 1
 window_size = 1
 # convolution full connected parameter
 fc_size = 1024
@@ -60,27 +61,33 @@ arousal_or_valence = args[2]
 inputs = list(map(int,args[3:]))
 bands = list(map(minus,inputs))
 print(bands)
-input_channel_num = len(bands)
+input_channel_num = len(bands) * time_step
 
-dataset_dir = "/home/yyl/DE_CNN/DE_dataset/without_base/DE_"
+dataset_dir = "/home/yyl/DE_CNN/DE_dataset/"
 ###load training set
 
 data_file = sio.loadmat(dataset_dir+input_file+".mat")
 cnn_datasets = data_file["data"]
 label_key = arousal_or_valence+"_labels"
 labels = data_file[label_key]
+
+#2018-5-16 modified
+label_index = [i for i in range(0,labels.shape[1],time_step)]
+
+labels = labels[0,[label_index]]
 labels = np.squeeze(np.transpose(labels))
-print("loaded shape:",labels.shape)
+# print("loaded shape:",labels.shape)
 lables_backup = labels
-print("cnn_dataset shape before reshape:", np.shape(cnn_datasets))
+# print("cnn_dataset shape before reshape:", np.shape(cnn_datasets))
 cnn_datasets = cnn_datasets.transpose(0,2,3,1)
 
 cnn_datasets = cnn_datasets[:,:,:,bands]
 
-cnn_datasets = cnn_datasets.reshape(len(cnn_datasets), window_size, 9,9,input_channel_num)
-print("cnn_dataset shape after reshape:", np.shape(cnn_datasets))
+cnn_datasets = cnn_datasets.reshape(len(cnn_datasets)//time_step, window_size, 9,9,input_channel_num)
+# cnn_datasets = cnn_datasets.reshape(len(cnn_datasets), window_size, 9,9,input_channel_num)
+# print("cnn_dataset shape after reshape:", np.shape(cnn_datasets))
 one_hot_labels = np.array(list(pd.get_dummies(labels)))
-print("one_hot_labels:",one_hot_labels.shape)
+# print("one_hot_labels:",one_hot_labels.shape)
 labels = np.asarray(pd.get_dummies(labels), dtype=np.int8)
 # shuffle data
 index = np.array(range(0, len(labels)))
@@ -105,9 +112,9 @@ n_labels = 2
 
 # training parameter
 lambda_loss_amount = 0.5
-training_epochs = 80
+training_epochs = 300
 
-batch_size = 200
+batch_size = 500
 
 
 # kernel parameter
@@ -205,6 +212,7 @@ print("\nconv_3 shape:", conv_3.shape)
 shape = conv_3.get_shape().as_list()
 conv_3_flat = tf.reshape(conv_3, [-1, shape[1] * shape[2] * shape[3]])
 cnn_fc = apply_fully_connect(conv_3_flat, shape[1] * shape[2] * shape[3], fc_size,"fc")
+
 # print("shape after cnn_full", np.shape(conv_3_shape))
 # dropout regularizer
 # Dropout (to reduce overfitting; useful when training very large neural network)
@@ -246,6 +254,7 @@ config.gpu_options.allow_growth = True
 
 fold = 10
 for curr_fold in range(fold):
+    print("folder: ",curr_fold)
     fold_size = cnn_datasets.shape[0]//fold
     indexes_list = [i for i in range(len(cnn_datasets))]
     indexes = np.array(indexes_list)
@@ -258,6 +267,14 @@ for curr_fold in range(fold):
     cnn_train_x = cnn_datasets[split]
     train_y = labels[split]
     train_sample = train_y.shape[0]
+
+    # shuffle data
+    index = np.array(range(0, len(train_y)))
+    np.random.shuffle(index)
+
+    cnn_train_x   = cnn_train_x[index]
+    train_y  = train_y[index]
+
     print("training examples:", train_sample)
     test_sample = test_y.shape[0]
     print("test examples    :",test_sample)
@@ -267,9 +284,6 @@ for curr_fold in range(fold):
     accuracy_batch_size = batch_size
     train_accuracy_batch_num = batch_num_per_epoch
     test_accuracy_batch_num = math.floor(cnn_test_x.shape[0]/batch_size)+ 1
-    # print label
-    one_hot_labels = np.array(list(pd.get_dummies(lables_backup)))
-    print(one_hot_labels)
 
     with tf.Session(config=config) as session:
         session.run(tf.global_variables_initializer())
@@ -401,33 +415,13 @@ for curr_fold in range(fold):
                             "train_sample": train_sample, "test_sample": test_sample,"batch_size":batch_size}, index=[0])
     #    summary = pd.DataFrame({'class': one_hot_labels, 'recall': test_recall, 'precision': test_precision,
     #                            'f1_score': test_f1})  # , 'roc_auc':test_auc})
-        # if band == 1:
-        #     file_dir = "theta"
-        # elif band ==2:
-        #     file_dir = "alpha"
-        # elif band ==3:
-        #     file_dir = "beta"
-        # else:
-        #     file_dir = "gmma"
         file_dir = ""
         for i in inputs:
             file_dir = file_dir+str(i)
         # file_dir = str(band)+str(band_1)+str(band_2)+str(band_3)
-        writer = pd.ExcelWriter("/home/yyl/DE_CNN/result/without_base/"+file_dir+"/"+arousal_or_valence+"/"+input_file+"_"+str(curr_fold)+".xlsx")
+        writer = pd.ExcelWriter("/home/yyl/DE_CNN/result/with_base/"+file_dir+"/LOSO"+"/"+arousal_or_valence+"/"+input_file+"_"+str(curr_fold)+".xlsx")
         ins.to_excel(writer, 'condition', index=False)
         result.to_excel(writer, 'result', index=False)
-    #    summary.to_excel(writer, 'summary', index=False)
-        # fpr, tpr, auc
-        fpr = dict()
-        tpr = dict()
-        roc_auc = dict()
-        i = 0
-        for key in one_hot_labels:
-            fpr[key], tpr[key], _ = roc_curve(test_true[:, i], test_posi[:, i])
-            roc_auc[key] = auc(fpr[key], tpr[key])
-            roc = pd.DataFrame({"fpr": fpr[key], "tpr": tpr[key], "roc_auc": roc_auc[key]})
-            roc.to_excel(writer, str(key), index=False)
-            i += 1
         writer.save()
         '''
         with open("./result/cnn_rnn_parallel/tune_rnn_layer/"+output_dir+"/confusion_matrix.pkl", "wb") as fp:
