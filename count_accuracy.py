@@ -46,6 +46,9 @@ def fill_cells(dir_path,column_index,model_name,target_class):
 	out_sheet.write(sub+3,column_index+1,mean_accuracy)
 	out_sheet.write(sub+4,column_index,"std:")
 	out_sheet.write(sub+4,column_index+1,std)
+
+# fill_cells("/home/yyl/DE_CNN/result/with_base/2D/",0,"2D_with","valence")
+# fill_cells("/home/yyl/DE_CNN/result/with_base/2D/",2,"2D_with","arousal")
 fill_cells(dir_path+"1/",0,"θ","valence")
 fill_cells(dir_path+"1/",2,"θ","arousal")
 
@@ -94,4 +97,5 @@ fill_cells(dir_path+"1234/",72,"θ+α+β+γ","arousal")
 fill_cells("/home/yyl/DE_CNN/result/without_base/without_decomposed/"+"1/",75,"original","valence")
 fill_cells("/home/yyl/DE_CNN/result/without_base/without_decomposed/"+"1/",77,"original","arousal")
 
-out_book.save("accuracies_without_base.xls")
+out_book.save("accuracies_without.xls")
+print("end")
