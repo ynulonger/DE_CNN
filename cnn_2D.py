@@ -69,7 +69,8 @@ arousal_or_valence = args[2]
 base_or_not = args[3]
 input_channel_num = 1
 
-dataset_dir = "/home/yyl/DE_CNN/DE_dataset/2D/"+base_or_not+"/DE_"
+# dataset_dir = "/home/yyl/DE_CNN/DE_dataset/2D/"+base_or_not+"/DE_"
+dataset_dir = "/home/yyl/"
 ###load training set
 
 data_file = sio.loadmat(dataset_dir+input_file+".mat")
@@ -101,7 +102,7 @@ print("**********(" + time.asctime(time.localtime(time.time())) + ") Define para
 lambda_loss_amount = 0.5
 training_epochs = 80
 
-batch_size = 200
+batch_size = 1024
 
 
 # kernel parameter
@@ -124,7 +125,7 @@ pooling_height = 2
 pooling_width = 2
 pooling_stride = 2
 # algorithn parameter
-learning_rate = 1e-4
+learning_rate = 1e-5
 
 
 def weight_variable(shape,name):
@@ -318,9 +319,9 @@ for curr_fold in range(fold):
                 train_loss_save = np.append(train_loss_save, np.mean(train_loss))
 
                 if(np.mean(train_accuracy)<0.8):
-                    learning_rate=1e-4
+                    learning_rate=1e-5
                 elif(0.8<np.mean(train_accuracy)<0.85):
-                    learning_rate=5e-5
+                    learning_rate=1e-5
                 elif(0.85<np.mean(train_accuracy)):
                     learning_rate=5e-6
 
@@ -393,7 +394,7 @@ for curr_fold in range(fold):
                             "learning_rate": learning_rate, "regularization": regularization_method,
                             "train_sample": train_sample, "test_sample": test_sample,"batch_size":batch_size}, index=[0])
 
-        writer = pd.ExcelWriter("/home/yyl/DE_CNN/result/"+base_or_not+"/2D/"+arousal_or_valence+"/"+input_file+"_"+str(curr_fold)+".xlsx")
+        writer = pd.ExcelWriter("/home/yyl/DE_CNN/result/"+base_or_not+"/2D/3D_"+arousal_or_valence+"/"+input_file+"_"+str(curr_fold)+".xlsx")
         ins.to_excel(writer, 'condition', index=False)
         result.to_excel(writer, 'result', index=False)
 

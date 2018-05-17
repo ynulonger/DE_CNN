@@ -63,7 +63,7 @@ bands = list(map(minus,inputs))
 print(bands)
 input_channel_num = len(bands) * time_step
 
-dataset_dir = "/home/yyl/DE_CNN/DE_dataset/"
+dataset_dir = "/home/yyl/"
 ###load training set
 
 data_file = sio.loadmat(dataset_dir+input_file+".mat")
@@ -112,9 +112,9 @@ n_labels = 2
 
 # training parameter
 lambda_loss_amount = 0.5
-training_epochs = 300
+training_epochs = 80
 
-batch_size = 500
+batch_size = 1024
 
 
 # kernel parameter
@@ -137,7 +137,7 @@ pooling_height = 2
 pooling_width = 2
 pooling_stride = 2
 # algorithn parameter
-learning_rate = 1e-4
+learning_rate = 1e-5
 
 
 def weight_variable(shape,name):
@@ -338,7 +338,7 @@ for curr_fold in range(fold):
                 train_loss_save = np.append(train_loss_save, np.mean(train_loss))
 
                 if(np.mean(train_accuracy)<0.8):
-                    learning_rate=1e-4
+                    learning_rate=1e-5
                 elif(0.8<np.mean(train_accuracy)<0.85):
                     learning_rate=5e-5
                 elif(0.85<np.mean(train_accuracy)):
