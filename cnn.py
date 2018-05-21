@@ -90,11 +90,11 @@ one_hot_labels = np.array(list(pd.get_dummies(labels)))
 # print("one_hot_labels:",one_hot_labels.shape)
 labels = np.asarray(pd.get_dummies(labels), dtype=np.int8)
 # shuffle data
-index = np.array(range(0, len(labels)))
-np.random.shuffle( index)
+# index = np.array(range(0, len(labels)))
+# np.random.shuffle( index)
 
-cnn_datasets   = cnn_datasets[index]
-labels  = labels[index]
+# cnn_datasets   = cnn_datasets[index]
+# labels  = labels[index]
 
 
 print("**********(" + time.asctime(time.localtime(time.time())) + ") Load and Split dataset End **********\n")
@@ -252,7 +252,7 @@ print("\n**********(" + time.asctime(time.localtime(time.time())) + ") Train and
 config = tf.ConfigProto()
 config.gpu_options.allow_growth = True
 
-fold = 10
+fold = 32
 for curr_fold in range(fold):
     print("folder: ",curr_fold)
     fold_size = cnn_datasets.shape[0]//fold
@@ -337,12 +337,12 @@ for curr_fold in range(fold):
                 train_accuracy_save = np.append(train_accuracy_save, np.mean(train_accuracy))
                 train_loss_save = np.append(train_loss_save, np.mean(train_loss))
 
-                if(np.mean(train_accuracy)<0.8):
+                if(np.mean(train_accuracy)<0.7):
                     learning_rate=1e-5
-                elif(0.8<np.mean(train_accuracy)<0.85):
-                    learning_rate=5e-5
-                elif(0.85<np.mean(train_accuracy)):
+                elif(0.7<np.mean(train_accuracy)<0.85):
                     learning_rate=5e-6
+                elif(0.85<np.mean(train_accuracy)):
+                    learning_rate=1e-7
 
                 for j in range(test_accuracy_batch_num):
                     start = j * batch_size
@@ -419,7 +419,7 @@ for curr_fold in range(fold):
         for i in inputs:
             file_dir = file_dir+str(i)
         # file_dir = str(band)+str(band_1)+str(band_2)+str(band_3)
-        writer = pd.ExcelWriter("/home/yyl/DE_CNN/result/with_base/"+file_dir+"/LOSO"+"/"+arousal_or_valence+"/"+input_file+"_"+str(curr_fold)+".xlsx")
+        writer = pd.ExcelWriter("/home/yyl/DE_CNN/result/with_base/"+file_dir+"/LOSO"+"/32_folds/"+arousal_or_valence+"/"+input_file+"_"+str(curr_fold)+".xlsx")
         ins.to_excel(writer, 'condition', index=False)
         result.to_excel(writer, 'result', index=False)
         writer.save()

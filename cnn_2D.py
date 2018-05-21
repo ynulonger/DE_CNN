@@ -125,7 +125,7 @@ pooling_height = 2
 pooling_width = 2
 pooling_stride = 2
 # algorithn parameter
-learning_rate = 1e-5
+learning_rate = 5e-5
 
 
 def weight_variable(shape,name):
@@ -239,7 +239,7 @@ print("\n**********(" + time.asctime(time.localtime(time.time())) + ") Train and
 config = tf.ConfigProto()
 config.gpu_options.allow_growth = True
 
-fold = 10
+fold = 32
 for curr_fold in range(fold):
     fold_size = cnn_datasets.shape[0]//fold
     indexes_list = [i for i in range(len(cnn_datasets))]
@@ -318,9 +318,9 @@ for curr_fold in range(fold):
                 train_accuracy_save = np.append(train_accuracy_save, np.mean(train_accuracy))
                 train_loss_save = np.append(train_loss_save, np.mean(train_loss))
 
-                if(np.mean(train_accuracy)<0.8):
-                    learning_rate=1e-5
-                elif(0.8<np.mean(train_accuracy)<0.85):
+                if(np.mean(train_accuracy)<0.7):
+                    learning_rate=5e-5
+                elif(0.7<np.mean(train_accuracy)<0.85):
                     learning_rate=1e-5
                 elif(0.85<np.mean(train_accuracy)):
                     learning_rate=5e-6
@@ -394,7 +394,7 @@ for curr_fold in range(fold):
                             "learning_rate": learning_rate, "regularization": regularization_method,
                             "train_sample": train_sample, "test_sample": test_sample,"batch_size":batch_size}, index=[0])
 
-        writer = pd.ExcelWriter("/home/yyl/DE_CNN/result/"+base_or_not+"/2D/3D_"+arousal_or_valence+"/"+input_file+"_"+str(curr_fold)+".xlsx")
+        writer = pd.ExcelWriter("/home/yyl/DE_CNN/result/"+base_or_not+"/2D/cross_object/"+arousal_or_valence+"/"+input_file+"_"+str(curr_fold)+".xlsx")
         ins.to_excel(writer, 'condition', index=False)
         result.to_excel(writer, 'result', index=False)
 

@@ -42,6 +42,7 @@ pool_3_shape = 'None'
 conv_4_shape = '1*1*128*4'
 pool_4_shape = 'None'
 
+time_step = 1
 window_size = 1
 # convolution full connected parameter
 fc_size = 1024
@@ -60,27 +61,33 @@ arousal_or_valence = args[2]
 inputs = list(map(int,args[3:]))
 bands = list(map(minus,inputs))
 print(bands)
-input_channel_num = len(bands)
+input_channel_num = len(bands) * time_step
 
-dataset_dir = "/home/yyl/DE_CNN/DE_dataset/"
+dataset_dir = "/home/yyl/"
 ###load training set
 
 data_file = sio.loadmat(dataset_dir+input_file+".mat")
 cnn_datasets = data_file["data"]
 label_key = arousal_or_valence+"_labels"
 labels = data_file[label_key]
+
+#2018-5-16 modified
+label_index = [i for i in range(0,labels.shape[1],time_step)]
+
+labels = labels[0,[label_index]]
 labels = np.squeeze(np.transpose(labels))
-print("loaded shape:",labels.shape)
+# print("loaded shape:",labels.shape)
 lables_backup = labels
-print("cnn_dataset shape before reshape:", np.shape(cnn_datasets))
+# print("cnn_dataset shape before reshape:", np.shape(cnn_datasets))
 cnn_datasets = cnn_datasets.transpose(0,2,3,1)
 
 cnn_datasets = cnn_datasets[:,:,:,bands]
 
-cnn_datasets = cnn_datasets.reshape(len(cnn_datasets), window_size, 9,9,input_channel_num)
-print("cnn_dataset shape after reshape:", np.shape(cnn_datasets))
+cnn_datasets = cnn_datasets.reshape(len(cnn_datasets)//time_step, window_size, 9,9,input_channel_num)
+# cnn_datasets = cnn_datasets.reshape(len(cnn_datasets), window_size, 9,9,input_channel_num)
+# print("cnn_dataset shape after reshape:", np.shape(cnn_datasets))
 one_hot_labels = np.array(list(pd.get_dummies(labels)))
-print("one_hot_labels:",one_hot_labels.shape)
+# print("one_hot_labels:",one_hot_labels.shape)
 labels = np.asarray(pd.get_dummies(labels), dtype=np.int8)
 # shuffle data
 # index = np.array(range(0, len(labels)))
@@ -105,9 +112,9 @@ n_labels = 2
 
 # training parameter
 lambda_loss_amount = 0.5
-training_epochs = 100
+training_epochs = 10
 
-batch_size = 10
+batch_size = 400
 
 
 # kernel parameter
@@ -124,13 +131,13 @@ kernel_height_4th = 1
 kernel_width_4th = 1
 
 kernel_stride = 1
-conv_channel_num = 64
+conv_channel_num = 32
 # pooling parameter
 pooling_height = 2
 pooling_width = 2
 pooling_stride = 2
 # algorithn parameter
-learning_rate = 1e-4
+learning_rate = 1e-5
 
 
 def weight_variable(shape,name):
@@ -156,7 +163,7 @@ def apply_conv2d(x, filter_height, filter_width, in_channels, out_channels, kern
     print("weight shape:", np.shape(weight))
     print("x shape:", np.shape(x))
     #tf.layers.batch_normalization()
-    return tf.nn.selu(tf.add(conv2d(x, weight, kernel_stride),bias))
+    return tf.nn.selu(tf.layers.batch_normalization(tf.add(conv2d(x, weight, kernel_stride),bias)))
 
 def apply_max_pooling(x, pooling_height, pooling_width, pooling_stride):
     # API: must ksize[0]=ksize[4]=1, strides[0]=strides[4]=1
@@ -205,6 +212,7 @@ print("\nconv_3 shape:", conv_3.shape)
 shape = conv_3.get_shape().as_list()
 conv_3_flat = tf.reshape(conv_3, [-1, shape[1] * shape[2] * shape[3]])
 cnn_fc = apply_fully_connect(conv_3_flat, shape[1] * shape[2] * shape[3], fc_size,"fc")
+
 # print("shape after cnn_full", np.shape(conv_3_shape))
 # dropout regularizer
 # Dropout (to reduce overfitting; useful when training very large neural network)
@@ -246,6 +254,16 @@ config.gpu_options.allow_growth = True
 
 fold = 32
 for curr_fold in range(fold):
+    test_index = []
+    # for i in range(0,40):
+    #     temp_index = [j for j in range(i*60,i*60+30)]
+    #     test_index = np.append(test_index,temp_index)
+
+    # fine_tune_index = np.setxor1d([i for i in range(0,2400)],test_index)
+
+    # test_index = list(map(int,test_index))
+    # fine_tune_index = list(map(int,fine_tune_index))
+
     print("folder: ",curr_fold)
     fold_size = cnn_datasets.shape[0]//fold
     indexes_list = [i for i in range(len(cnn_datasets))]
@@ -253,7 +271,9 @@ for curr_fold in range(fold):
     split_list = [i for i in range(curr_fold*fold_size,(curr_fold+1)*fold_size)]
     split = np.array(split_list)
     cnn_test_x = cnn_datasets[split] 
+    # cnn_test_x = cnn_one_x[test_index]
     test_y = labels[split]
+    # test_y = labels[test_index]
 
     split = np.array(list(set(indexes_list)^set(split_list)))
     cnn_train_x = cnn_datasets[split]
@@ -276,9 +296,6 @@ for curr_fold in range(fold):
     accuracy_batch_size = batch_size
     train_accuracy_batch_num = batch_num_per_epoch
     test_accuracy_batch_num = math.floor(cnn_test_x.shape[0]/batch_size)+ 1
-    # print label
-    one_hot_labels = np.array(list(pd.get_dummies(lables_backup)))
-    print(one_hot_labels)
 
     with tf.Session(config=config) as session:
         session.run(tf.global_variables_initializer())
@@ -332,12 +349,12 @@ for curr_fold in range(fold):
                 train_accuracy_save = np.append(train_accuracy_save, np.mean(train_accuracy))
                 train_loss_save = np.append(train_loss_save, np.mean(train_loss))
 
-                if(np.mean(train_accuracy)<0.8):
-                    learning_rate=1e-4
-                elif(0.8<np.mean(train_accuracy)<0.85):
-                    learning_rate=5e-5
-                elif(0.85<np.mean(train_accuracy)):
+                if(np.mean(train_accuracy)<0.7):
+                    learning_rate=1e-5
+                elif(0.7<np.mean(train_accuracy)<0.85):
                     learning_rate=5e-6
+                elif(0.85<np.mean(train_accuracy)):
+                    learning_rate=1e-7
 
                 for j in range(test_accuracy_batch_num):
                     start = j * batch_size
@@ -414,14 +431,146 @@ for curr_fold in range(fold):
         for i in inputs:
             file_dir = file_dir+str(i)
         # file_dir = str(band)+str(band_1)+str(band_2)+str(band_3)
-        writer = pd.ExcelWriter("/home/yyl/DE_CNN/result/with_base/"+file_dir+"/LOSO"+"/"+arousal_or_valence+"/"+input_file+"_"+str(curr_fold)+".xlsx")
+        writer = pd.ExcelWriter("/home/yyl/DE_CNN/result/with_base/"+file_dir+"/Transfer_Learning/"+arousal_or_valence+"/"+input_file+"_"+str(curr_fold)+".xlsx")
         ins.to_excel(writer, 'condition', index=False)
         result.to_excel(writer, 'result', index=False)
         writer.save()
-        '''
-        with open("./result/cnn_rnn_parallel/tune_rnn_layer/"+output_dir+"/confusion_matrix.pkl", "wb") as fp:
-            pickle.dump(confusion_matrix, fp)
-        '''
+
+        ###############################################Fine Tune###############################################
+        for epoch in range(training_epochs//2):
+            cnn_train_x = cnn_one_x[fine_tune_index]
+            print("learning rate: ",learning_rate)
+            cost_history = np.zeros(shape=[0], dtype=float)
+            for b in range(batch_num_per_epoch):
+                start = b* batch_size
+                if (b+1)*batch_size>train_y.shape[0]:
+                    offset = train_y.shape[0] % batch_size
+                else:
+                    offset = batch_size
+                #offset = (b * batch_size) % (train_y.shape[0] - batch_size)
+                #print("start->end:",start,"->",start+offset)
+                cnn_batch = cnn_train_x[start:(start + offset), :, :, :, :]
+                cnn_batch = cnn_batch.reshape(len(cnn_batch) * window_size, 9, 9, input_channel_num)
+                # print("cnn_batch shape:",cnn_batch.shape)
+                batch_y = train_y[start:(offset + start), :]
+                _, c = session.run([optimizer, cost],
+                                   feed_dict={cnn_in: cnn_batch, Y: batch_y, keep_prob: 1 - dropout_prob,
+                                              phase_train: True})
+                cost_history = np.append(cost_history, c)
+            if (epoch % 1 == 0):
+                train_accuracy = np.zeros(shape=[0], dtype=float)
+                test_accuracy = np.zeros(shape=[0], dtype=float)
+                test_loss = np.zeros(shape=[0], dtype=float)
+                train_loss = np.zeros(shape=[0], dtype=float)
+
+                for i in range(train_accuracy_batch_num):
+                    start = i* batch_size
+                    if (i+1)*batch_size>train_y.shape[0]:
+                        offset = train_y.shape[0] % batch_size
+                    else:
+                        offset = batch_size
+                    #offset = (i * accuracy_batch_size) % (train_y.shape[0] - accuracy_batch_size)
+                    train_cnn_batch = cnn_train_x[start:(start + offset), :, :, :, :]
+                    train_cnn_batch = train_cnn_batch.reshape(len(train_cnn_batch) * window_size, 9, 9, input_channel_num)
+                    train_batch_y = train_y[start:(start + offset), :]
+
+                    train_a, train_c = session.run([accuracy, cost],
+                                                   feed_dict={cnn_in: train_cnn_batch,Y: train_batch_y, keep_prob: 1.0, phase_train: False})
+
+                    train_loss = np.append(train_loss, train_c)
+                    train_accuracy = np.append(train_accuracy, train_a)
+                print("(" + time.asctime(time.localtime(time.time())) + ") Epoch: ", epoch + 1, " Training Cost: ",
+                      np.mean(train_loss), "Training Accuracy: ", np.mean(train_accuracy))
+                train_accuracy_save = np.append(train_accuracy_save, np.mean(train_accuracy))
+                train_loss_save = np.append(train_loss_save, np.mean(train_loss))
+
+                if(np.mean(train_accuracy)<0.7):
+                    learning_rate=1e-5
+                elif(0.7<np.mean(train_accuracy)<0.85):
+                    learning_rate=5e-6
+                elif(0.85<np.mean(train_accuracy)):
+                    learning_rate=1e-7
+
+                for j in range(test_accuracy_batch_num):
+                    start = j * batch_size
+                    if (j+1)*batch_size>test_y.shape[0]:
+                        offset = test_y.shape[0] % batch_size
+                    else:
+                        offset = batch_size
+                    #offset = (j * accuracy_batch_size) % (test_y.shape[0] - accuracy_batch_size)
+                    test_cnn_batch = cnn_test_x[start:(offset + start), :, :, :, :]
+                    test_cnn_batch = test_cnn_batch.reshape(len(test_cnn_batch) * window_size, 9, 9, input_channel_num)
+                    test_batch_y = test_y[start:(offset + start), :]
+
+                    test_a, test_c = session.run([accuracy, cost],
+                                                 feed_dict={cnn_in: test_cnn_batch,Y: test_batch_y,keep_prob: 1.0, phase_train: False})
+
+                    test_accuracy = np.append(test_accuracy, test_a)
+                    test_loss = np.append(test_loss, test_c)
+
+                print("(" + time.asctime(time.localtime(time.time())) + ") Epoch: ", epoch + 1, " Test Cost: ",
+                      np.mean(test_loss), "Test Accuracy: ", np.mean(test_accuracy), "\n")
+                test_accuracy_save = np.append(test_accuracy_save, np.mean(test_accuracy))
+                test_loss_save = np.append(test_loss_save, np.mean(test_loss))
+            # reshuffle
+            index = np.array(range(0, len(train_y)))
+            np.random.shuffle(index)
+            cnn_train_x=cnn_train_x[index]
+            train_y=train_y[index]
+
+        test_accuracy = np.zeros(shape=[0], dtype=float)
+        test_loss = np.zeros(shape=[0], dtype=float)
+        test_pred = np.zeros(shape=[0], dtype=float)
+        test_true = np.zeros(shape=[0, 2], dtype=float)
+        test_posi = np.zeros(shape=[0, 2], dtype=float)
+        for k in range(test_accuracy_batch_num):
+            start = k * batch_size
+            if (k+1)*batch_size>test_y.shape[0]:
+                offset = test_y.shape[0] % batch_size
+            else:
+                offset = batch_size
+            #offset = (k * accuracy_batch_size) % (test_y.shape[0] - accuracy_batch_size)
+            test_cnn_batch = cnn_test_x[start:(offset + start), :, :, :, :]
+            test_cnn_batch = test_cnn_batch.reshape(len(test_cnn_batch) * window_size, 9, 9, input_channel_num)
+            test_batch_y = test_y[start:(offset + start), :]
+
+            test_a, test_c, test_p, test_r = session.run([accuracy, cost, y_pred, y_posi],
+                                                         feed_dict={cnn_in: test_cnn_batch,Y: test_batch_y, keep_prob: 1.0, phase_train: False})
+            test_t = test_batch_y
+
+            test_accuracy = np.append(test_accuracy, test_a)
+            test_loss = np.append(test_loss, test_c)
+            test_pred = np.append(test_pred, test_p)
+            test_true = np.vstack([test_true, test_t])
+            test_posi = np.vstack([test_posi, test_r])
+        # test_true = tf.argmax(test_true, 1)
+        test_pred_1_hot = np.asarray(pd.get_dummies(test_pred), dtype=np.int8)
+        test_true_list = tf.argmax(test_true, 1).eval()
+
+        print("(" + time.asctime(time.localtime(time.time())) + ") Final Test Cost: ", np.mean(test_loss),
+              "Final Test Accuracy: ", np.mean(test_accuracy))
+        # save result
+    #    os.system("mkdir -p ./result/cnn_rnn_parallel/tune_rnn_layer/" + output_dir)
+        result = pd.DataFrame(
+            {'epoch': range(1, epoch + 2), "train_accuracy": train_accuracy_save, "test_accuracy": test_accuracy_save,
+             "train_loss": train_loss_save, "test_loss": test_loss_save})
+
+        ins = pd.DataFrame({'conv_1': conv_1_shape, 'conv_2': conv_2_shape,'conv_3': conv_3_shape,
+                            'cnn_fc': fc_size,'accuracy': np.mean(test_accuracy),
+                            'keep_prob': 1 - dropout_prob,"epoch": epoch + 1, "norm": norm_type,
+                            "learning_rate": learning_rate, "regularization": regularization_method,
+                            "train_sample": train_sample, "test_sample": test_sample,"batch_size":batch_size}, index=[0])
+    #    summary = pd.DataFrame({'class': one_hot_labels, 'recall': test_recall, 'precision': test_precision,
+    #                            'f1_score': test_f1})  # , 'roc_auc':test_auc})
+        file_dir = ""
+        for i in inputs:
+            file_dir = file_dir+str(i)
+        # file_dir = str(band)+str(band_1)+str(band_2)+str(band_3)
+        writer = pd.ExcelWriter("/home/yyl/DE_CNN/result/with_base/"+file_dir+"/Transfer_Learning/"+arousal_or_valence+"/"+input_file+"_fineTune_"+str(curr_fold)+".xlsx")
+        ins.to_excel(writer, 'condition', index=False)
+        result.to_excel(writer, 'result', index=False)
+        writer.save()
+
         # save model
         for variable in tf.trainable_variables():
             print(variable.name,"->",variable.get_shape())
@@ -431,4 +580,3 @@ for curr_fold in range(fold):
                    "./result/cnn_rnn_parallel/tune_rnn_layer/" + output_dir + "/model_" + output_file)
         '''
         print("**********(" + time.asctime(time.localtime(time.time())) + ") Train and Test NN End **********\n")
-
