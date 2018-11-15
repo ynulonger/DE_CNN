@@ -129,11 +129,13 @@ def feature_normalize(data):
 if __name__ == '__main__':
 	dataset_dir = "/home/data_preprocessed_matlab/"
 
-	result_dir = "/home/yyl/DE_CNN/1D_dataset/DE_"
+	result_dir = "/home/yyl/DE_CNN/1D_dataset/"
+	if os.path.isdir(result_dir)==False:
+		os.makedirs(result_dir)
 
 	for file in os.listdir(dataset_dir):
 		print("processing: ",file,"......")
 		file_path = os.path.join(dataset_dir,file)
 		base_DE,trial_DE = decompose(file_path)
 		arousal_labels,valence_labels = get_labels(file_path)
-		sio.savemat(result_dir+file,{"base_data":base_DE,"data":trial_DE,"valence_labels":valence_labels,"arousal_labels":arousal_labels})
+		sio.savemat(result_dir+"DE_"+file,{"base_data":base_DE,"data":trial_DE,"valence_labels":valence_labels,"arousal_labels":arousal_labels})
