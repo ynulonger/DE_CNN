@@ -25,6 +25,8 @@ import math
 def minus(item):
     return item-1
     
+input_height = 9
+input_width = 9
 # input_channel_num = 4
 conv_fuse = "plus"
 
@@ -56,17 +58,20 @@ regularization_method = 'dropout'
 enable_penalty = True
 
 args = sys.argv[:]
-input_file = args[1]
-arousal_or_valence = args[2]
-inputs = list(map(int,args[3:]))
+with_or_not = args[1]
+input_file = args[2]
+arousal_or_valence = args[3]
+inputs = list(map(int,args[4:]))
 bands = list(map(minus,inputs))
 print(bands)
 input_channel_num = len(bands) * time_step
 
-dataset_dir = "/home/yyl/"
+dataset_dir = "/home/yyl/DE_CNN/3D_dataset/"+with_or_not+"_base/DE_"
 ###load training set
-
+print("loading ",dataset_dir+input_file,".mat")
 data_file = sio.loadmat(dataset_dir+input_file+".mat")
+
+
 cnn_datasets = data_file["data"]
 label_key = arousal_or_valence+"_labels"
 labels = data_file[label_key]
@@ -83,18 +88,18 @@ cnn_datasets = cnn_datasets.transpose(0,2,3,1)
 
 cnn_datasets = cnn_datasets[:,:,:,bands]
 
-cnn_datasets = cnn_datasets.reshape(len(cnn_datasets)//time_step, window_size, 9,9,input_channel_num)
+cnn_datasets = cnn_datasets.reshape(len(cnn_datasets)//time_step, window_size,input_height,input_width,input_channel_num)
 # cnn_datasets = cnn_datasets.reshape(len(cnn_datasets), window_size, 9,9,input_channel_num)
 # print("cnn_dataset shape after reshape:", np.shape(cnn_datasets))
 one_hot_labels = np.array(list(pd.get_dummies(labels)))
 # print("one_hot_labels:",one_hot_labels.shape)
 labels = np.asarray(pd.get_dummies(labels), dtype=np.int8)
 # shuffle data
-# index = np.array(range(0, len(labels)))
-# np.random.shuffle( index)
+index = np.array(range(0, len(labels)))
+np.random.shuffle( index)
 
-# cnn_datasets   = cnn_datasets[index]
-# labels  = labels[index]
+cnn_datasets   = cnn_datasets[index]
+labels  = labels[index]
 
 
 print("**********(" + time.asctime(time.localtime(time.time())) + ") Load and Split dataset End **********\n")
@@ -104,17 +109,13 @@ print("**********(" + time.asctime(time.localtime(time.time())) + ") Define para
 n_input_ele = 32
 n_time_step = window_size
 
-
-input_height = 9
-input_width = 9
-
 n_labels = 2
 
 # training parameter
 lambda_loss_amount = 0.5
-training_epochs = 80
+training_epochs = 50
 
-batch_size = 1024
+batch_size = 128
 
 
 # kernel parameter
@@ -137,8 +138,19 @@ pooling_height = 2
 pooling_width = 2
 pooling_stride = 2
 # algorithn parameter
-learning_rate = 1e-5
+learning_rate = 1e-4
 
+def get_index():
+    test_index = []
+    for i in range(0,40):
+        temp_index = [j for j in range(i*60,i*60+30)]
+        test_index = np.append(test_index,temp_index)
+
+    fine_tune_index = np.setxor1d([i for i in range(0,2400)],test_index)
+
+    test_index = list(map(int,test_index))
+    fine_tune_index = list(map(int,fine_tune_index))
+    return test_index,fine_tune_index
 
 def weight_variable(shape,name):
     initial = tf.truncated_normal(shape, stddev=0.1)
@@ -163,7 +175,7 @@ def apply_conv2d(x, filter_height, filter_width, in_channels, out_channels, kern
     print("weight shape:", np.shape(weight))
     print("x shape:", np.shape(x))
     #tf.layers.batch_normalization()
-    return tf.nn.selu(tf.layers.batch_normalization(tf.add(conv2d(x, weight, kernel_stride),bias)))
+    return tf.nn.selu(tf.add(conv2d(x, weight, kernel_stride),bias))
 
 def apply_max_pooling(x, pooling_height, pooling_width, pooling_stride):
     # API: must ksize[0]=ksize[4]=1, strides[0]=strides[4]=1
@@ -197,14 +209,21 @@ phase_train = tf.placeholder(tf.bool, name='phase_train')
 conv_1 = apply_conv2d(cnn_in, kernel_height_1st, kernel_width_1st, input_channel_num, conv_channel_num, kernel_stride,'conv1')
 # pool_1 = apply_max_pooling(conv_1, pooling_height, pooling_width, pooling_stride)
 print("\nconv_1 shape:", conv_1.shape)
+# print("\npool_1 shape:", pool_1.shape)
 # second CNN layer
 conv_2 = apply_conv2d(conv_1, kernel_height_2nd, kernel_width_2nd, conv_channel_num, conv_channel_num * 2,
                       kernel_stride,'conv2')
 # pool_2 = apply_max_pooling(conv_2, pooling_height, pooling_width, pooling_stride)
 print("\nconv_2 shape:", conv_2.shape)
+# print("\npool_2 shape:", pool_2.shape)
 # third CNN layer
 conv_3 = apply_conv2d(conv_2, kernel_height_3rd, kernel_width_3rd, conv_channel_num * 2, conv_channel_num * 4,
                       kernel_stride,'conv3')
+# conv_3 = apply_max_pooling(conv_3, pooling_height, pooling_width, pooling_stride)
+print("\nconv_3 shape:", conv_3.shape)
+# print("\npool_3 shape:", conv_3.shape)
+conv_3 = apply_conv2d(conv_3, 1, 1,conv_channel_num * 4, conv_channel_num,kernel_stride,'conv4')
+# conv_3 = apply_max_pooling(conv_3, pooling_height, pooling_width, pooling_stride)
 print("\nconv_3 shape:", conv_3.shape)
 
 # fully connected layer
@@ -252,8 +271,8 @@ print("\n**********(" + time.asctime(time.localtime(time.time())) + ") Train and
 config = tf.ConfigProto()
 config.gpu_options.allow_growth = True
 
-fold = 32
-for curr_fold in range(fold):
+fold = 10
+for curr_fold in range(0,fold):
     print("folder: ",curr_fold)
     fold_size = cnn_datasets.shape[0]//fold
     indexes_list = [i for i in range(len(cnn_datasets))]
@@ -303,7 +322,7 @@ for curr_fold in range(fold):
                 #offset = (b * batch_size) % (train_y.shape[0] - batch_size)
                 #print("start->end:",start,"->",start+offset)
                 cnn_batch = cnn_train_x[start:(start + offset), :, :, :, :]
-                cnn_batch = cnn_batch.reshape(len(cnn_batch) * window_size, 9, 9, input_channel_num)
+                cnn_batch = cnn_batch.reshape(len(cnn_batch) * window_size, input_height, input_width, input_channel_num)
                 # print("cnn_batch shape:",cnn_batch.shape)
                 batch_y = train_y[start:(offset + start), :]
                 _, c = session.run([optimizer, cost],
@@ -324,7 +343,7 @@ for curr_fold in range(fold):
                         offset = batch_size
                     #offset = (i * accuracy_batch_size) % (train_y.shape[0] - accuracy_batch_size)
                     train_cnn_batch = cnn_train_x[start:(start + offset), :, :, :, :]
-                    train_cnn_batch = train_cnn_batch.reshape(len(train_cnn_batch) * window_size, 9, 9, input_channel_num)
+                    train_cnn_batch = train_cnn_batch.reshape(len(train_cnn_batch) * window_size, input_height, input_width, input_channel_num)
                     train_batch_y = train_y[start:(start + offset), :]
 
                     train_a, train_c = session.run([accuracy, cost],
@@ -338,11 +357,11 @@ for curr_fold in range(fold):
                 train_loss_save = np.append(train_loss_save, np.mean(train_loss))
 
                 if(np.mean(train_accuracy)<0.7):
-                    learning_rate=1e-5
+                    learning_rate=1e-4
                 elif(0.7<np.mean(train_accuracy)<0.85):
-                    learning_rate=5e-6
+                    learning_rate=5e-5
                 elif(0.85<np.mean(train_accuracy)):
-                    learning_rate=1e-7
+                    learning_rate=1e-6
 
                 for j in range(test_accuracy_batch_num):
                     start = j * batch_size
@@ -352,7 +371,7 @@ for curr_fold in range(fold):
                         offset = batch_size
                     #offset = (j * accuracy_batch_size) % (test_y.shape[0] - accuracy_batch_size)
                     test_cnn_batch = cnn_test_x[start:(offset + start), :, :, :, :]
-                    test_cnn_batch = test_cnn_batch.reshape(len(test_cnn_batch) * window_size, 9, 9, input_channel_num)
+                    test_cnn_batch = test_cnn_batch.reshape(len(test_cnn_batch) * window_size, input_height, input_width, input_channel_num)
                     test_batch_y = test_y[start:(offset + start), :]
 
                     test_a, test_c = session.run([accuracy, cost],
@@ -384,7 +403,7 @@ for curr_fold in range(fold):
                 offset = batch_size
             #offset = (k * accuracy_batch_size) % (test_y.shape[0] - accuracy_batch_size)
             test_cnn_batch = cnn_test_x[start:(offset + start), :, :, :, :]
-            test_cnn_batch = test_cnn_batch.reshape(len(test_cnn_batch) * window_size, 9, 9, input_channel_num)
+            test_cnn_batch = test_cnn_batch.reshape(len(test_cnn_batch) * window_size, input_height, input_width, input_channel_num)
             test_batch_y = test_y[start:(offset + start), :]
 
             test_a, test_c, test_p, test_r = session.run([accuracy, cost, y_pred, y_posi],
@@ -419,21 +438,18 @@ for curr_fold in range(fold):
         for i in inputs:
             file_dir = file_dir+str(i)
         # file_dir = str(band)+str(band_1)+str(band_2)+str(band_3)
-        writer = pd.ExcelWriter("/home/yyl/DE_CNN/result/with_base/"+file_dir+"/LOSO"+"/32_folds/"+arousal_or_valence+"/"+input_file+"_"+str(curr_fold)+".xlsx")
+        file_path = "/home/yyl/DE_CNN/result/"+with_or_not+"/"+file_dir+"/"+arousal_or_valence+"/"+input_file+"_"+str(curr_fold)+".xlsx"
+        print("saving ",file_path)
+        writer = pd.ExcelWriter(file_path)
         ins.to_excel(writer, 'condition', index=False)
         result.to_excel(writer, 'result', index=False)
         writer.save()
-        '''
-        with open("./result/cnn_rnn_parallel/tune_rnn_layer/"+output_dir+"/confusion_matrix.pkl", "wb") as fp:
-            pickle.dump(confusion_matrix, fp)
-        '''
-        # save model
-        for variable in tf.trainable_variables():
-            print(variable.name,"->",variable.get_shape())
-        '''
-        saver = tf.train.Saver()
-        saver.save(session,
-                   "./result/cnn_rnn_parallel/tune_rnn_layer/" + output_dir + "/model_" + output_file)
-        '''
+
+        # save model parameters
+        # model_dict= {}
+        # for variable in tf.trainable_variables():
+        #     print(variable.name,"-->",variable.get_shape())
+        #     model_dict[variable.name]=session.run(variable)
+        # sio.savemat(input_file+".mat",model_dict)
         print("**********(" + time.asctime(time.localtime(time.time())) + ") Train and Test NN End **********\n")
 

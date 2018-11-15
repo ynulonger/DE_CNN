@@ -5,7 +5,6 @@ import numpy as np
 
 arousal_or_valence = "valence"
 output_file = "total.xlsx"
-dir_path = "/home/yyl/DE_CNN/result/with_base/1234/LOSO/32_folds/"
 model_name = "CNN"
 # 10 folds cross validation
 fold = 32
@@ -38,15 +37,19 @@ def fill_cells(dir_path,filename,column_index,model_name,target_class,fold):
 	print(subject,":",accuracy)
 
 # fill_cells(dir_path,0,"3D_CO","valence")
-fill_cells(dir_path,"CO_3D",2,"3D_CO","arousal",32)
-fill_cells(dir_path,"CO_3D",2,"3D_CO","valence",32)
+print("LOSO")
+fill_cells("/home/yyl/DE_CNN/result/with_base/1234/Transfer_Learning/","CO_3D",2,"3D","arousal",32)
+fill_cells("/home/yyl/DE_CNN/result/with_base/1234/Transfer_Learning/","CO_3D",2,"3D","valence",32)
+# fill_cells("/home/yyl/DE_CNN/result/with_base/2D/Transfer_Learning/","CO_2D",2,"2D_CO","arousal",32)
+# fill_cells("/home/yyl/DE_CNN/result/with_base/2D/Transfer_Learning/","CO_2D",2,"2D_CO","valence",32)
 
-fill_cells("/home/yyl/DE_CNN/result/with_base/1234/LOSO/8_folds/","CO_3D",2,"3D_CO","arousal",32)
-fill_cells("/home/yyl/DE_CNN/result/with_base/1234/LOSO/8_folds/","CO_3D",2,"3D_CO","valence",32)
-
+print("SVI")
 fill_cells("/home/yyl/DE_CNN/result/with_base/1234/LOSO/","LOSO",2,"3D_CO","arousal",10)
 fill_cells("/home/yyl/DE_CNN/result/with_base/1234/LOSO/","LOSO",2,"3D_CO","valence",10)
 
-
+print("TL")
+fill_cells("/home/yyl/DE_CNN/result/with_base/1234/Transfer_Learning/fine_tune_","sub",2,"3D","arousal",32)
+fill_cells("/home/yyl/DE_CNN/result/with_base/1234/Transfer_Learning/fine_tune_","sub",2,"3D","valence",32)
+# fill_cells("/home/yyl/DE_CNN/result/with_base/2D/Transfer_Learning/fine_tune_","sub",2,"2D","arousal",32)
 # out_book.save("accuracies_LVO.xls")
 print("end")

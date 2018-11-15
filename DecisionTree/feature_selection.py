@@ -106,7 +106,7 @@ data = pd.DataFrame({"with_theta":result[:,0],
 
 print("fffffff",result.shape)
 
-writer = pd.ExcelWriter("tree_based_total_1"+".xlsx")
+writer = pd.ExcelWriter("tree_based_total"+".xlsx")
 data.to_excel(writer,"result",index=False)
 writer.save()
 

@@ -2,13 +2,15 @@
 import xlrd
 import xlwt
 import numpy as np
+import sys
 
-arousal_or_valence = "valence"
-output_file = "total.xlsx"
-dir_path = "/home/yyl/DE_CNN/result/with_base/1234/LVO/"
+arousal_or_valence = sys.argv[1]
+with_or_without = sys.argv[2]
+
+dir_path = "/home/yyl/DE_CNN/result/"+with_or_without+"_base/"
 model_name = "CNN"
 # 10 folds cross validation
-fold = 40
+fold = 10
 
 out_book = xlwt.Workbook(encoding='utf-8', style_compression=0)
 out_sheet = out_book.add_sheet('accuracy', cell_overwrite_ok=True)
@@ -39,62 +41,28 @@ def fill_cells(dir_path,column_index,model_name,target_class):
 		out_sheet.write(sub + 2,column_index, subject)
 		out_sheet.write(sub + 2,column_index+1,accuracy)
 	mean_accuracy = total_accuracy/32
-	std = np.std(accuracy,ddof=1)
+	# std = np.std(accuracy,ddof=1)
 	print("mean accuracy:",mean_accuracy)
 	out_sheet.write(sub+3,column_index,"mean:")
 	out_sheet.write(sub+3,column_index+1,mean_accuracy)
-	out_sheet.write(sub+4,column_index,"std:")
-	out_sheet.write(sub+4,column_index+1,std)
+	# out_sheet.write(sub+4,column_index,"std:")
+	# out_sheet.write(sub+4,column_index+1,std)
 
-fill_cells(dir_path,0,"2D_with","valence")
-fill_cells(dir_path,2,"2D_with","arousal")
-# fill_cells(dir_path+"1/",0,"θ","valence")
-# fill_cells(dir_path+"1/",2,"θ","arousal")
+fill_cells(dir_path+"1/",0,"θ",arousal_or_valence)
+fill_cells(dir_path+"2/",3,"α",arousal_or_valence)
+fill_cells(dir_path+"3/",6,"β",arousal_or_valence)
+fill_cells(dir_path+"4/",9,"γ",arousal_or_valence)
+fill_cells(dir_path+"12/",12,"θ+α",arousal_or_valence)
+fill_cells(dir_path+"13/",15,"θ+β",arousal_or_valence)
+fill_cells(dir_path+"14/",18,"θ+γ",arousal_or_valence)
+fill_cells(dir_path+"23/",21,"α+β",arousal_or_valence)
+fill_cells(dir_path+"24/",24,"α+γ",arousal_or_valence)
+fill_cells(dir_path+"34/",27,"β+γ",arousal_or_valence)
+fill_cells(dir_path+"123/",30,"θ+α+β",arousal_or_valence)
+fill_cells(dir_path+"124/",33,"θ+α+γ",arousal_or_valence)
+fill_cells(dir_path+"134/",36,"θ+β+γ",arousal_or_valence)
+fill_cells(dir_path+"234/",39,"α+β+γ",arousal_or_valence)
+fill_cells(dir_path+"1234/",42,"θ+α+β+γ",arousal_or_valence)
 
-# fill_cells(dir_path+"2/",5,"α","valence")
-# fill_cells(dir_path+"2/",7,"α","arousal")
-
-# fill_cells(dir_path+"3/",10,"β","valence")
-# fill_cells(dir_path+"3/",12,"β","arousal")
-
-# fill_cells(dir_path+"4/",15,"γ","valence")
-# fill_cells(dir_path+"4/",17,"γ","arousal")
-
-# fill_cells(dir_path+"12/",20,"θ+α","valence")
-# fill_cells(dir_path+"12/",22,"θ+α","arousal")
-
-# fill_cells(dir_path+"13/",25,"θ+β","valence")
-# fill_cells(dir_path+"13/",27,"θ+β","arousal")
-
-# fill_cells(dir_path+"14/",30,"θ+γ","valence")
-# fill_cells(dir_path+"14/",32,"θ+γ","arousal")
-
-# fill_cells(dir_path+"23/",35,"α+β","valence")
-# fill_cells(dir_path+"23/",37,"α+β","arousal")
-
-# fill_cells(dir_path+"24/",40,"α+γ","valence")
-# fill_cells(dir_path+"24/",42,"α+γ","arousal")
-
-# fill_cells(dir_path+"34/",45,"β+γ","valence")
-# fill_cells(dir_path+"34/",47,"β+γ","arousal")
-
-# fill_cells(dir_path+"123/",50,"θ+α+β","valence")
-# fill_cells(dir_path+"123/",52,"θ+α+β","arousal")
-
-# fill_cells(dir_path+"124/",55,"θ+α+γ","valence")
-# fill_cells(dir_path+"124/",57,"θ+α+γ","arousal")
-
-# fill_cells(dir_path+"134/",60,"θ+β+γ","valence")
-# fill_cells(dir_path+"134/",62,"θ+β+γ","arousal")
-
-# fill_cells(dir_path+"234/",65,"α+β+γ","valence")
-# fill_cells(dir_path+"234/",67,"α+β+γ","arousal")
-
-# fill_cells(dir_path+"1234/",70,"θ+α+β+γ","valence")
-# fill_cells(dir_path+"1234/",72,"θ+α+β+γ","arousal")
-
-# fill_cells("/home/yyl/DE_CNN/result/without_base/without_decomposed/"+"1/",75,"original","valence")
-# fill_cells("/home/yyl/DE_CNN/result/without_base/without_decomposed/"+"1/",77,"original","arousal")
-
-out_book.save("accuracies_LVO.xls")
+out_book.save("./result/summary/acc_"+with_or_without+"_"+arousal_or_valence+".xls")
 print("end")
