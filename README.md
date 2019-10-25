@@ -1,7 +1,7 @@
 # Code for ICONIP 2018 submission
-This repository contains the tensorflow implementation for our ICONIP-2018 paper: "Continuous Convolutional Neural Network with 3D Input for EEG-Based Emotion Recognition" (To appear...)
+This repository contains the tensorflow implementation for our ICONIP-2018 paper: "[Continuous Convolutional Neural Network with 3D Input for EEG-Based Emotion Recognition](https://link.springer.com/chapter/10.1007/978-3-030-04239-4_39)"
 ## About the paper
-* Title: Continuous Convolutional Neural Network with 3D Input for EEG-Based Emotion Recognition
+* Title: [Continuous Convolutional Neural Network with 3D Input for EEG-Based Emotion Recognition](https://link.springer.com/chapter/10.1007/978-3-030-04239-4_39)
 * Authors: [Yilong Yang](https://ynulonger.github.io/), Qingfeng Wu, YazhenFu, Xiaowei Chen
 * Institution: Xiamen University
 * Published in: 2018 International Conference on Neural Information Processing (ICONIP) 
