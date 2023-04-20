@@ -58,10 +58,10 @@ regularization_method = 'dropout'
 enable_penalty = True
 
 args = sys.argv[:]
-with_or_not = args[1]
-input_file = args[2]
-arousal_or_valence = args[3]
-inputs = list(map(int,args[4:]))
+with_or_not = args[1]   # with, or without
+input_file = args[2]    # s01, s02, ..., s32
+arousal_or_valence = args[3]    # arousal, or valence
+inputs = list(map(int,args[4:]))    # 1 or 2 or 3 or 4 or 1 2 or ... or 1 2 3 4
 bands = list(map(minus,inputs))
 print(bands)
 input_channel_num = len(bands) * time_step
